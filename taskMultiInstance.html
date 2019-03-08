@@ -1,0 +1,64 @@
+<script type="text/javascript">
+<!--
+$(function(){
+		loadTaskMultiInstance();
+});
+function saveTaskMultiInstance(){
+	if($('#sequentialYes').prop('checked')){
+		task.isSequential=true;
+	}
+	if($('#sequentialNo').prop('checked')){
+		task.isSequential=false;
+	}
+	task._loopCardinality=$("#loopCardinality").val();
+	task._collection=$("#collection").val();
+	task._elementVariable=$("#elementVariable").val();
+	task._completionCondition=$("#completionCondition").val();
+}
+function loadTaskMultiInstance(){
+	if(task.isSequential){
+		$('#sequentialYes').prop('checked',true);
+	}else{
+		$('#sequentialNo').prop('checked',true);
+	}
+	
+	$("#loopCardinality").val(task._loopCardinality);
+	$("#collection").val(task._collection);
+	$("#elementVariable").val(task._elementVariable);
+	$("#completionCondition").val(task._completionCondition);
+}
+//-->
+</script>
+<table>
+	<tr>
+			<td align="right">Sequential:</td>
+			<td>
+				<input type="radio" id="sequentialYes" name="sequential"  value="true"/>Yes
+				<input type="radio" id="sequentialNo" name="sequential"  value="false" checked/>No
+			</td>
+	</tr>
+	<tr>
+			<td align="right">Loop Cardinality:</td>
+			<td>
+				<input type="text" id="loopCardinality" name="loopCardinality"  value="" size="50"/>
+			</td>
+	</tr>
+	<tr>
+			<td align="right">Collection:</td>
+			<td>
+				<input type="text" id="collection" name="collection"  value="" size="50"/>
+			</td>
+	</tr>
+	<tr>
+			<td align="right">Element Variable:</td>
+			<td>
+				<input type="text" id="elementVariable" name="elementVariable"  value="" size="50"/>
+			</td>
+	</tr>
+	<tr>
+			<td align="right">Completion Condition:</td>
+			<td>
+				<input type="text" id="completionCondition" name="completionCondition"  value="" size="50"/>
+			</td>
+	</tr>
+</table>

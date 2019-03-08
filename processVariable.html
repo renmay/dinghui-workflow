@@ -1,0 +1,183 @@
+<script type="text/javascript">
+<!--
+var processVariablesEditCount = 0;
+$(function () {
+    _process_variables_dg=$('#process-variables-table').datagrid({
+		//title:"Listener",
+		//url:'${ctx}/wf/procdef/procdef!search.action',//加载表格数据的URL
+		singleSelect:true,
+		//width:600,
+		height:300,
+		iconCls:'icon-edit',
+		//fit:true,
+		//idField:'id',
+		rownumbers:true,
+	    striped:true,
+	    toolbar:[{
+	        text:'New',
+	        iconCls:'icon-add',
+	        handler:function(){
+		    	if(processVariablesEditCount>0){
+						$.messager.alert("error","有可编辑的单元格，不能添加",'error');
+					return;
+				}
+				$('#process-variables-table').datagrid('appendRow',{
+					id:'',
+					name:'',
+					type:'',
+					scope:'',
+					defaultValue:'',
+					remark:'',
+					action:''
+				});
+				var index = $('#process-variables-table').datagrid('getRows').length-1;
+				$('#process-variables-table').datagrid('beginEdit', index);
+	        }
+	    }],
+		
+		onDblClickRow:function(rowIndex,rowData){
+			editProcessVariable(rowIndex);
+		},
+		
+		onBeforeEdit:function(index,row){
+			row.editing = true;
+			$(this).datagrid('refreshRow', index);
+			processVariablesEditCount++;
+		},
+		onAfterEdit:function(index,row){
+			row.editing = false;
+			$(this).datagrid('refreshRow', index);
+			processVariablesEditCount--;
+		},
+		onCancelEdit:function(index,row){
+			row.editing = false;
+			$(this).datagrid('refreshRow', index);
+			processVariablesEditCount--;
+		}
+	});
+	loadProcessVariables();
+});
+/*****************variables配置开始**********************/
+function loadProcessVariables(){
+	var variables = process.variables;
+	var variables_grid_rows=[];
+	for(var i=0;i<variables.getSize();i++){
+		var variable = variables.get(i);
+		var v = {
+					id:variable.id,
+					name:variable.name,
+					type:variable.type,
+					scope:variable.scope,
+					defaultValue:variable.defaultValue,
+					remark:variable.remark,
+					action:''
+				};
+		variables_grid_rows[i]=v;
+	};
+	var variables_grid_data={
+			total:variables.getSize(),
+			rows:variables_grid_rows
+	};
+	_process_variables_dg.datagrid('loadData',variables_grid_data);
+}
+function cancelProcessVariable(id){
+	_process_variables_dg.datagrid('cancelEdit', id);
+}
+function editProcessVariable(id){
+	_process_variables_dg.datagrid('beginEdit', id);
+}
+function saveProcessVariable(id){
+	_process_variables_dg.datagrid('endEdit', id);
+	var rows = _process_variables_dg.datagrid('getRows');
+	var rowData = rows[id];
+	var variable = new ESTDesigner.model.Variable();
+	variable.name=rowData.name;
+	variable.type=rowData.type;
+	variable.scope=rowData.scope;
+	variable.defaultValue=rowData.defaultValue;
+	variable.remark=rowData.remark;
+	process.addVariable(variable);
+}
+function deleteProcessVariable(id){
+	var rows = _process_variables_dg.datagrid('getRows');
+	var rowData = rows[id];
+	process.deleteVariable(rowData.id);
+	_process_variables_dg.datagrid('deleteRow',id);
+	refreshAllProcessVariables();
+}
+function refreshAllProcessVariables(){
+	var rs = _process_variables_dg.datagrid('getRows');
+	for(var i=0;i<rs.length;i++){
+		var ri =_process_variables_dg.datagrid('getRowIndex',rs[i]);
+		_process_variables_dg.datagrid('refreshRow',ri);
+	}
+}
+function processVariablesActionFormatter(value,rowData,rowIndex){
+	var id = rowIndex;
+	var name = rowData.name;
+	var s='<img onclick="saveProcessVariable('+id+')" src="image/ok.png" title="'+"确定"+'" style="cursor:hand;"/>';
+	var c='<img onclick="cancelProcessVariable('+id+')" src="image/cancel.png" title="'+"取消"+'" style="cursor:hand;"/>';
+	var e='<img onclick="editProcessVariable('+id+')" src="image/modify.png" title="'+"修改"+'" style="cursor:hand;"/>';
+	var d='<img onclick="deleteProcessVariable('+id+')" src="image/delete.gif" title="'+"删除"+'" style="cursor:hand;"/>';
+	if(rowData.editing)
+		return s;
+	else
+		return e+'&nbsp;'+d;
+}
+//-->
+</script>
+<table id="process-variables-table">
+	<thead>
+		<tr>
+			<th field="id" hidden="true"></th>
+			<th field="name" width="200" align="middle" sortable="false"
+				editor="{
+						type:'validatebox',
+						options:{
+						required:true,
+						validType:'length[1,100]'
+					}}">Variable Name</th>
+			<th field="type" width="100" align="middle" sortable="false"
+				editor="{
+						type:'combobox',
+						options:{
+							editable:false,
+							data:[
+							{id:'string',text:'string',selected:true},
+							{id:'double',text:'number'},
+							{id:'boolean',text:'boolean'}
+							],
+							valueField:'id',
+							textField:'text'
+					}}">Type</th>
+			<th field="scope" width="100" align="middle" sortable="false"
+				editor="{
+						type:'combobox',
+						options:{
+							editable:false,
+							data:[
+							{id:'request',text:'request',selected:true},
+							{id:'session',text:'session'},
+							{id:'application',text:'application'}
+							],
+							valueField:'id',
+							textField:'text'
+					}}">Scope</th>
+			<th field="defaultValue" width="100" align="middle" sortable="false"
+				editor="{
+						type:'validatebox',
+						options:{
+						required:false,
+						validType:'length[1,150]'
+					}}">Default Value</th>
+			<th field="remark" width="100" align="middle" sortable="false"
+				editor="{
+						type:'validatebox',
+						options:{
+						required:false,
+						validType:'length[1,150]'
+					}}">Remark</th>
+			<th field="action" width="80" align="middle" formatter="processVariablesActionFormatter">Action</th>
+		</tr>
+	</thead>
+</table>

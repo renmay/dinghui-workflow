@@ -1,0 +1,169 @@
+<script type="text/javascript">
+<!--
+var processDataObjectsEditCount = 0;
+    $(function () {
+        _process_dataObjects_dg=$('#process-dataObjects-table').datagrid({
+    		//title:"Listener",
+    		//url:'${ctx}/wf/procdef/procdef!search.action',//加载表格数据的URL
+    		singleSelect:true,
+    		//width:600,
+    		height:300,
+    		iconCls:'icon-edit',
+    		//fit:true,
+    		//idField:'id',
+    		rownumbers:true,
+    	    striped:true,
+    	    toolbar:[{
+    	        text:'New',
+    	        iconCls:'icon-add',
+    	        handler:function(){
+    		    	if(processDataObjectsEditCount>0){
+    						$.messager.alert("error","有可编辑的单元格，不能添加",'error');
+    					return;
+    				}
+    				$('#process-dataObjects-table').datagrid('appendRow',{
+    					id:'',
+    					name:'',
+    					type:'',
+    					value:'',
+    					action:''
+    				});
+    				var index = $('#process-dataObjects-table').datagrid('getRows').length-1;
+    				$('#process-dataObjects-table').datagrid('beginEdit', index);
+    	        }
+    	    }],
+    		
+    		onDblClickRow:function(rowIndex,rowData){
+    			editProcessDataObject(rowIndex);
+    		},
+    		
+    		onBeforeEdit:function(index,row){
+    			row.editing = true;
+    			$(this).datagrid('refreshRow', index);
+    			processDataObjectsEditCount++;
+    		},
+    		onAfterEdit:function(index,row){
+    			row.editing = false;
+    			$(this).datagrid('refreshRow', index);
+    			processDataObjectsEditCount--;
+    		},
+    		onCancelEdit:function(index,row){
+    			row.editing = false;
+    			$(this).datagrid('refreshRow', index);
+    			processDataObjectsEditCount--;
+    		}
+    	});
+    	loadProcessDataObjects();
+    });
+    /*****************data object配置开始**********************/
+    function loadProcessDataObjects() {
+        var dataObjects = process.dataObjects;
+        var dataObjects_grid_rows = [];
+        for (var i = 0; i < dataObjects.getSize(); i++) {
+            var dataObject = dataObjects.get(i);
+            var v = {
+                id : dataObject.id,
+                name : dataObject.name,
+                type : dataObject.type,
+                value : dataObject.value,
+                action : ''
+            };
+            dataObjects_grid_rows[i] = v;
+        }
+        ;
+        var dataObjects_grid_data = {
+            total : dataObjects.getSize(),
+            rows : dataObjects_grid_rows
+        };
+        _process_dataObjects_dg.datagrid('loadData', dataObjects_grid_data);
+    }
+    function cancelProcessDataObject(id) {
+        _process_dataObjects_dg.datagrid('cancelEdit', id);
+    }
+    function editProcessDataObject(id) {
+        _process_dataObjects_dg.datagrid('beginEdit', id);
+    }
+    function saveProcessDataObject(id) {
+        _process_dataObjects_dg.datagrid('endEdit', id);
+        var rows = _process_dataObjects_dg.datagrid('getRows');
+        var rowData = rows[id];
+        var dataObject = new ESTDesigner.model.DataObject();
+        dataObject.name = rowData.name;
+        dataObject.type = rowData.type;
+        dataObject.value = rowData.value;
+        process.addDataObject(dataObject);
+    }
+    function deleteProcessDataObject(id) {
+        var rows = _process_dataObjects_dg.datagrid('getRows');
+        var rowData = rows[id];
+        process.deleteDataObject(rowData.id);
+        _process_dataObjects_dg.datagrid('deleteRow', id);
+        refreshAllProcessDataObject();
+    }
+    function refreshAllProcessDataObject() {
+        var rs = _process_dataObjects_dg.datagrid('getRows');
+        for (var i = 0; i < rs.length; i++) {
+            var ri = _process_dataObjects_dg.datagrid('getRowIndex', rs[i]);
+            _process_dataObjects_dg.datagrid('refreshRow', ri);
+        }
+    }
+    function processDataObjectsActionFormatter(value, rowData, rowIndex) {
+        var id = rowIndex;
+        var name = rowData.name;
+        var s = '<img onclick="saveProcessDataObject(' + id
+                + ')" src="image/ok.png" title="' + "确定"
+                + '" style="cursor:hand;"/>';
+        var c = '<img onclick="cancelProcessDataObject(' + id
+                + ')" src="image/cancel.png" title="' + "取消"
+                + '" style="cursor:hand;"/>';
+        var e = '<img onclick="editProcessDataObject(' + id
+                + ')" src="image/modify.png" title="' + "修改"
+                + '" style="cursor:hand;"/>';
+        var d = '<img onclick="deleteProcessDataObject(' + id
+                + ')" src="image/delete.gif" title="' + "删除"
+                + '" style="cursor:hand;"/>';
+        if (rowData.editing)
+            return s;
+        else
+            return e + '&nbsp;' + d;
+    }
+//-->
+</script>
+<table id="process-dataObjects-table">
+	<thead>
+		<tr>
+			<th field="id" hidden="true"></th>
+			<th field="name" width="200" align="middle" sortable="false"
+				editor="{
+						type:'validatebox',
+						options:{
+						required:true,
+						validType:'length[1,100]'
+					}}">Name</th>
+			<th field="type" width="100" align="middle" sortable="false"
+				editor="{
+						type:'combobox',
+						options:{
+							editable:false,
+							data:[
+							{id:'string',text:'string',selected:true},
+							{id:'int',text:'int'},
+							{id:'long',text:'long'},
+							{id:'long',text:'datatime'},
+							{id:'double',text:'double'},
+							{id:'boolean',text:'boolean'}
+							],
+							valueField:'id',
+							textField:'text'
+					}}">Type</th>
+			<th field="value" width="100" align="middle" sortable="false"
+				editor="{
+						type:'validatebox',
+						options:{
+						required:false,
+						validType:'length[1,150]'
+					}}">Value</th>
+			<th field="action" width="80" align="middle" formatter="processDataObjectsActionFormatter">Action</th>
+		</tr>
+	</thead>
+</table>
